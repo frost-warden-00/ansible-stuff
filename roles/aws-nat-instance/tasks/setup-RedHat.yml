@@ -1,0 +1,5 @@
+    - name: Amazon Linux - Enable EPEL Repository on Amazon Linux 2
+      shell: amazon-linux-extras install epel -y
+      become: True
+      when: ansible_facts['distribution'] == 'Amazon' and ansible_facts['distribution_major_version'] == '2'
+      changed_when: false

@@ -1,0 +1,16 @@
+    - name: Red Hat like - Install the MySQL repo
+      yum:
+        name: https://dev.mysql.com/get/mysql80-community-release-el8-1.noarch.rpm
+        state: present
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == '8'
+
+    - name: Red Hat like - Install the MySQL repo
+      yum:
+        name: https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
+        state: present
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == '7'
+
+    - name: Red Hat like - Upgrade all packages for MySQL repo
+      yum:
+        name: '*'
+        state: latest

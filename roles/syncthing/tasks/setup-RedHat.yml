@@ -1,0 +1,11 @@
+    - name: Red Hat like - Allow Grafana port
+      ansible.posix.firewalld:
+        port: 8384/tcp
+        permanent: yes
+        state: enabled
+
+   # Need a Reboot for take effect
+    - name: Red Hat like -  Put SELinux in permissive mode, logging actions that would be blocked.
+      ansible.posix.selinux:
+        policy: targeted
+        state: permissive

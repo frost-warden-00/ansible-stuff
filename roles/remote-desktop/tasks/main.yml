@@ -1,0 +1,62 @@
+---
+    - name: xrdp | Install
+      package:
+        name:
+          - xrdp
+        state: latest
+
+    - name: xrdp | Fix black cursor bug
+      replace:
+        path: /etc/xrdp/xrdp.ini
+        regexp: 'new_cursors=true'
+        replace: "new_cursors=false"
+
+    - name: xrdp | Restart xrdp
+      service:
+        name: xrdp
+        state: restarted
+        enabled: yes
+
+    - name: xrdp | Set session to plasma
+      ansible.builtin.lineinfile:
+        path: /home/{{ ansible_user }}/.xsession
+        line: /usr/bin/startplasma-x11
+        create: yes
+
+    - name: xrdp | Create .xsessionrc file
+      blockinfile:
+        path: /home/{{ ansible_user }}/.xsessionrc
+        block: |
+            export XDG_SESSION_DESKTOP=KDE
+            export XDG_DATA_DIRS=/usr/share/plasma:/usr/local/share:/usr/share:/var/lib/snapd/desktop
+            export XDG_CONFIG_DIRS=/etc/xdg/xdg-plasma:/etc/xdg:/usr/share/kubuntu-default-settings/kf5-settings
+        create: true
+
+    - name: xrdp | Fix "authentication required" bug
+      blockinfile:
+        path: /etc/polkit-1/localauthority/50-local.d/xrdp-NetworkManager.pkla
+        block: |
+            [Netowrkmanager]
+            Identity=unix-group:sudo
+            Action=org.freedesktop.NetworkManager.network-control
+            ResultAny=yes
+            ResultInactive=yes
+            ResultActive=yes
+        create: true
+
+    - name: xrdp | Fix "authentication required" bug
+      blockinfile:
+        path: /etc/polkit-1/localauthority/50-local.d/xrdp-packagekit.pkla
+        block: |
+            [Netowrkmanager]
+            Identity=unix-group:sudo
+            Action=org.freedesktop.packagekit.system-sources-refresh
+            ResultAny=yes
+            ResultInactive=auth_admin
+            ResultActive=yes
+        create: true
+
+    - name: xrdp | Restart polkit
+      service:
+        name: polkit
+        state: restarted

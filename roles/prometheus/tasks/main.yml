@@ -1,0 +1,115 @@
+---
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Add user prometheus
+      user:
+        name: prometheus
+        shell: /bin/false
+        system: true
+        create_home: no
+
+    - name: Ensure temporal directory exist
+      file: state=directory path=/tmp/prometheus
+
+    - name: Ensure Prometheus etc directory exist
+      ansible.builtin.file:
+       path: /etc/prometheus
+       state: directory
+       owner: prometheus
+       group: prometheus
+
+    - name: Ensure Prometheus etc directory exist
+      ansible.builtin.file:
+        path: /var/lib/prometheus
+        state: directory
+        owner: prometheus
+        group: prometheus
+
+    - name: Check latest Prometheus version
+      uri:
+        url: https://api.github.com/repos/prometheus/prometheus/releases/latest
+        return_content: true
+      register: prometheus_latest
+
+    - name: "Installing prometheus {{ prometheus_latest.json.tag_name }}"
+      loop: "{{ prometheus_latest.json.assets }}"
+      when: "'linux-amd64' in item.name"
+      unarchive:
+        remote_src: yes
+        src: "{{ item.browser_download_url }}"
+        dest: /tmp/prometheus/
+        keep_newer: yes
+        extra_opts: [--strip-components=1]
+
+    - name: Install Prometheus binaries
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /tmp/prometheus/prometheus
+        dest: /usr/local/bin/prometheus
+        mode: '0755'
+
+    - name: Install promtool binaries
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /tmp/prometheus/promtool
+        dest: /usr/local/bin/promtool
+        mode: '0755'
+
+    - name: Change ownership to prometheus for file prometheus
+      ansible.builtin.file:
+        path: /usr/local/bin/prometheus
+        owner: prometheus
+        group: prometheus
+
+    - name: Change ownership to prometheus for file promtool
+      ansible.builtin.file:
+        path: /usr/local/bin/promtool
+        owner: prometheus
+        group: prometheus
+
+    - name: Copying Prometheus consoles directory
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /tmp/prometheus/consoles
+        dest: /etc/prometheus/
+
+    - name: Copying Prometheus console libraries directory
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /tmp/prometheus/console_libraries
+        dest: /etc/prometheus/
+
+    - name: Recursively change ownership of a directory
+      ansible.builtin.file:
+        path: /etc/prometheus
+        state: directory
+        recurse: yes
+        owner: prometheus
+        group: prometheus
+
+    - name: Create Prometheus configuratioa file
+      ansible.builtin.template:
+        src: files/prometheus.yml.j2
+        dest: /etc/prometheus/prometheus.yml
+
+    - name: Create service prometheus.service
+      ansible.builtin.template:
+        src: files/prometheus.service.j2
+        dest: /etc/systemd/system/prometheus.service
+
+    - name: systemctl daemon_reload
+      systemd:
+        daemon_reload: yes
+
+    - name: Start and Enable prometheus
+      service:
+        name: prometheus
+        state: started
+        enabled: yes
+
+    - name: Check whether port 9090 is available
+      wait_for:
+        port: 9090
+        state: started
+        timeout: 30

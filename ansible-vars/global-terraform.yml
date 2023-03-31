@@ -1,0 +1,16 @@
+---
+# example when using S3 as backend, old example using SSM but still works
+backend_region: "{{ lookup('aws_ssm', '/global/terraform/state/backend_region', region='us-east-1') }}"
+backend_bucket: "{{ lookup('aws_ssm', '/global/terraform/state/backend_bucket', region='us-east-1') }}"
+backend_key: "{{ lookup('aws_ssm', '/global/terraform/state/jobs/backend_key_update_ami', region='us-east-1') }}"
+backend_dynamodb_table: "{{ lookup('aws_ssm', '/global/terraform/state/backend_dynamodb_table', region='us-east-1') }}"
+deploy_region: "{{ lookup('aws_ssm', '/global/terraform/state/deploy_region', region='us-east-1') }}"
+deploy_role_arn: "{{ lookup('aws_ssm', '/global/terraform/state/deploy_role_arn', region='us-east-1') }}"
+
+access_key: "{{ lookup('aws_ssm', '/global/terraform/state/jobs/access_keys_update_ami', region='us-east-1') }}"
+secret_key: "{{ lookup('aws_ssm', '/global/terraform/state/jobs/secret_key_update_ami', region='us-east-1') }}"
+
+terraform_base_dir: "{{ base_dir }}/terraform"
+terraform_name: aws_update_ami
+
+#service_name_ami: "stack_ci_cd_gold"

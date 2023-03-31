@@ -1,0 +1,16 @@
+---
+
+      - name: dropbox | Install Dropbox key
+        apt_key:
+           keyserver: pgp.mit.edu
+           id: 1C61A2656FB57B7E4DE0F4C1FC918B335044912E
+
+      - name: dropbox | Add the official Dropbox Linux repository.
+        ansible.builtin.apt_repository:
+           repo: "deb https://linux.dropbox.com/ubuntu trusty main"
+           state: present
+
+      - name: dropbox | Install Dropbox
+        apt:
+           name: dropbox
+           state: present

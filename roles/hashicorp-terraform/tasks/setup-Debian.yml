@@ -1,0 +1,9 @@
+    - name: Debian - Add the HashiCorp GPG key.
+      apt_key:
+        url: https://apt.releases.hashicorp.com/gpg
+        state: present
+
+    - name: Debian - Add the official HashiCorp Linux repository.
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
+        state: present

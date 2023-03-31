@@ -1,0 +1,14 @@
+---
+# tasks file for Terraform
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Install Terraform
+      package:
+        name:
+           - terraform
+        state: present
+
+    - name: Download autocomplete tool for Terraform
+      command: terraform -install-autocomplete
+      changed_when: false

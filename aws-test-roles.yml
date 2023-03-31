@@ -1,0 +1,13 @@
+---
+- hosts: cloud_instances
+  become: yes
+
+  vars_files:
+    - ansible-vars/aws-variables.yml
+
+  roles:
+    - tools_server
+    - ansible
+    - docker
+    - prometheus
+    - node-exporter

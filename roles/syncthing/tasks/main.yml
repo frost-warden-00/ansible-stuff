@@ -1,0 +1,82 @@
+---
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Ensure main directory exist
+      file:
+        state: directory
+        path: "{{ main_directory }}/my_storage"
+
+    - name: Check latest Syncthing version
+      uri:
+        url: https://api.github.com/repos/syncthing/syncthing/releases/latest
+        return_content: true
+      register: syncthing_latest
+
+    - name: "Download Syncthing {{ syncthing_latest.json.tag_name }}"
+      loop: "{{ syncthing_latest.json.assets }}"
+      when: "'linux-amd64' in item.name"
+      unarchive:
+        remote_src: yes
+        src: "{{ item.browser_download_url }}"
+        dest: /tmp/
+        keep_newer: yes
+
+    - name: Install Syncthing
+      shell: cp /tmp/syncthing*/syncthing /usr/bin/
+
+    - name: Create service Syncthing
+      blockinfile:
+        path: /etc/systemd/system/syncthing@{{ ansible_user }}.service
+        block: |
+          [Unit]
+          Description=Syncthing - Open Source Continuous File Synchronization for %I
+          Documentation=man:syncthing(1)
+          After=network.target
+
+          [Service]
+          User=%i
+          ExecStart=/usr/bin/syncthing -no-browser -no-restart -logflags=0
+          Restart=on-failure
+          RestartSec=5
+          SuccessExitStatus=3 4
+          RestartForceExitStatus=3 4
+
+          # Hardening
+          ProtectSystem=full
+          PrivateTmp=true
+          SystemCallArchitectures=native
+          MemoryDenyWriteExecute=true
+          NoNewPrivileges=true
+
+          [Install]
+          WantedBy=multi-user.target
+        create: true
+
+    - name: systemctl daemon_reload
+      systemd:
+        daemon_reload: yes
+
+    - name: Start and Enable Syncthing
+      service:
+        name: syncthing@{{ ansible_user }}.service
+        state: started
+        enabled: yes
+
+    - name: Check whether port 8384 is available
+      wait_for:
+        port: 8384
+        state: started
+        timeout: 10
+
+    - name: Ansible replace string example
+      replace:
+        path: /home/{{ ansible_user }}/.config/syncthing/config.xml
+        regexp: '127.0.0.1'
+        replace: "{{ ansible_ssh_host }}"
+
+    - name: Restart Syncthing
+      service:
+        name: syncthing@{{ ansible_user }}.service
+        state: restarted
+        enabled: yes

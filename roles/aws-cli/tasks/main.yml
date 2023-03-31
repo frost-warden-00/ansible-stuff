@@ -1,0 +1,19 @@
+---
+# tasks file for aws-cli-v2
+    - name: TODOS - Download latests AWS CLI
+      get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+        mode: '0664'
+
+    - name: Unarchive file from AWS
+      unarchive:
+        src: /tmp/awscliv2.zip
+        dest: /tmp
+        remote_src: yes
+
+    - name: Install AWS CLI
+      command: ./install
+      args:
+        chdir: /tmp/aws
+        creates: /usr/local/aws-cli/v2/current

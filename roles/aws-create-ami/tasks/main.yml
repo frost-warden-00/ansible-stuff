@@ -1,0 +1,24 @@
+---
+# Setup tasks.
+
+    - name: AWS S3 - Install S3 module dependencies
+      pip:
+        name:
+         - boto3
+         - botocore
+        executable: pip3
+
+    - name: Basic AMI Creation
+      vars:
+            ansible_python_interpreter: /usr/bin/python3
+      amazon.aws.ec2_ami:
+            aws_access_key: "{{ access_key }}"
+            aws_secret_key: "{{ secret_key }}"
+            instance_id: "{{ aws_instance_id }}"
+            region: "{{ deploy_region }}"
+            wait: yes
+            name: "{{ service_name_ami }}"
+            tags:
+                  Name: "{{ service_name_ami }}"
+                  Service: ci-cd
+                  Delete: yes

@@ -1,0 +1,3 @@
+    - name: Debian - update package repositories and get latest package information
+      apt:
+        update_cache: yes

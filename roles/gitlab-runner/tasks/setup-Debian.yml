@@ -1,0 +1,17 @@
+    - name: Debian - update package repositories and get latest package information
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Debian - Download Gitlab Runner script init
+      get_url:
+        url: https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh
+        dest: /tmp/script.deb.sh
+        mode: '0777'
+
+    - name: Debian - Execute Gitlab Runner script init
+      ansible.builtin.shell: /tmp/script.deb.sh
+
+    - name: Debian - update package repositories and get latest package information
+      apt:
+        update_cache: yes

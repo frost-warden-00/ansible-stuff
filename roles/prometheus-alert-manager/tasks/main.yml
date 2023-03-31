@@ -1,0 +1,120 @@
+---
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Add user alertmanager
+      user:
+       name: alertmanager
+       shell: /bin/false
+       system: true
+       create_home: no
+
+    - name: Ensure temporal directory exist
+      file: state=directory path=/tmp/alertmanager
+
+    - name: Ensure alertmanager etc directory exist
+      ansible.builtin.file:
+       path: /etc/alertmanager
+       state: directory
+       owner: alertmanager
+       group: alertmanager
+
+    - name: Ensure alertmanager rules directory exist
+      ansible.builtin.file:
+       path: /etc/prometheus/rules
+       state: directory
+       owner: prometheus
+       group: prometheus
+
+    - name: Copy rules files on directory
+      ansible.builtin.copy:
+        src: files/node_exporter.yml
+        dest: /etc/prometheus/rules/node_exporter.yml
+        owner: prometheus
+        group: prometheus
+
+    - name: Copy rules files on directory
+      ansible.builtin.copy:
+        src: files/prometheus.yml
+        dest: /etc/prometheus/rules/prometheus.yml
+        owner: prometheus
+        group: prometheus
+
+    - name: Copy rules files on directory
+      ansible.builtin.copy:
+        src: files/blackbox.yml
+        dest: /etc/prometheus/rules/blackbox.yml
+        owner: prometheus
+        group: prometheus
+
+    - name: Check latest alertmanager version
+      uri:
+        url: https://api.github.com/repos/prometheus/alertmanager/releases/latest
+        return_content: true
+      register: alert_latest
+
+    - name: "Installing alertmanager {{ alert_latest.json.tag_name }}"
+      loop: "{{ alert_latest.json.assets }}"
+      when: "'linux-amd64' in item.name"
+      unarchive:
+        remote_src: yes
+        src: "{{ item.browser_download_url }}"
+        dest: /tmp/alertmanager/
+        keep_newer: yes
+        extra_opts: [--strip-components=1]
+
+    - name: Install alertmanager binaries
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /tmp/alertmanager/alertmanager
+        dest: /usr/local/bin/alertmanager
+        mode: '0755'
+
+    - name: Install amtool binaries
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /tmp/alertmanager/amtool
+        dest: /usr/local/bin/amtool
+        mode: '0755'
+
+    - name: Change ownership to alertmanager for file alertmanager
+      ansible.builtin.file:
+        path: /usr/local/bin/alertmanager
+        owner: alertmanager
+        group: alertmanager
+
+    - name: Change ownership to alertmanager for file promtool
+      ansible.builtin.file:
+        path: /usr/local/bin/amtool
+        owner: alertmanager
+        group: alertmanager
+
+    - name: Template a file to /etc/file.conf
+      ansible.builtin.template:
+        src: files/alertmanager.yml.j2
+        dest: /etc/alertmanager/alertmanager.yml
+        owner: alertmanager
+        group: alertmanager
+
+    - name: Create service alertmanager.service
+      ansible.builtin.template:
+        src: files/alertmanager.service.j2
+        dest: /etc/systemd/system/alertmanager.service
+
+    - name: systemctl daemon_reload
+      systemd:
+        daemon_reload: yes
+
+    - name: Start and Enable alertmanager
+      service:
+        name: alertmanager
+        state: started
+        enabled: yes
+      notify:
+        - Restart prometheus
+
+    - name: Check whether port 9093 is available
+      wait_for:
+        port: 9093
+        state: started
+        timeout: 30

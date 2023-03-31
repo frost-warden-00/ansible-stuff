@@ -1,0 +1,33 @@
+    - name: Import EPEL GPG key.
+      rpm_key:
+        key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ ansible_distribution_major_version }}
+        state: present
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == '8'
+
+    - name: Install EPEL repo.
+      yum:
+         name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+         state: present
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == '8'
+
+    - name: CentOS - Enable EPEL Repository on Red Hat like  7
+      yum:
+         name: epel-release
+         state: latest
+      become: True
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == '7'
+
+    - name: CentOS - Enable EPEL Repository on Amazon Linux 2
+      shell: amazon-linux-extras install epel -y
+      become: True
+      when: ansible_facts['distribution'] == 'Amazon' and ansible_facts['distribution_major_version'] == '2'
+
+    - name: Red Hat like - Install Python 3 and another tools
+      package: name=python3,python3-devel state=present
+
+    - name: CentOS - Glances requeriments
+      yum:
+        name: python-setuptools
+        state: latest
+      become: True
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts['distribution_major_version'] == '7'

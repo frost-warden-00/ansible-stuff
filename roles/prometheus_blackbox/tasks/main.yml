@@ -1,0 +1,79 @@
+---
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Add user blackbox
+      user:
+       name: blackbox
+       shell: /bin/false
+       system: true
+       create_home: no
+
+    - name: Ensure temporal directory exist
+      file: state=directory path=/tmp/blackbox
+
+    - name: Ensure blackbox etc directory exist
+      ansible.builtin.file:
+       path: /etc/blackbox
+       state: directory
+       owner: blackbox
+       group: blackbox
+
+    - name: Check latest blackbox version
+      uri:
+        url: https://api.github.com/repos/prometheus/blackbox_exporter/releases/latest
+        return_content: true
+      register: blackbox_latest
+
+    - name: "Installing blackbox {{ blackbox_latest.json.tag_name }}"
+      loop: "{{ blackbox_latest.json.assets }}"
+      when: "'linux-amd64' in item.name"
+      unarchive:
+        remote_src: yes
+        src: "{{ item.browser_download_url }}"
+        dest: /tmp/blackbox/
+        keep_newer: yes
+        extra_opts: [--strip-components=1]
+
+    - name: Install blackbox binaries
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /tmp/blackbox/blackbox_exporter
+        dest: /usr/local/bin/blackbox_exporter
+        mode: '0755'
+
+    - name: Change ownership to blackbox for file blackbox_exporter
+      ansible.builtin.file:
+        path: /usr/local/bin/blackbox_exporter
+        owner: blackbox
+        group: blackbox
+
+    - name: Template a file to /etc/blackbox
+      ansible.builtin.template:
+        src: files/blackbox.yml.j2
+        dest: /etc/blackbox/blackbox.yml
+        owner: blackbox
+        group: blackbox
+
+    - name: Create service blackbox.service
+      ansible.builtin.template:
+        src: files/blackbox.service.j2
+        dest: /etc/systemd/system/blackbox.service
+
+    - name: systemctl daemon_reload
+      systemd:
+        daemon_reload: yes
+
+    - name: Start and Enable blackbox
+      service:
+        name: blackbox
+        state: started
+        enabled: yes
+      notify:
+        - Restart prometheus
+
+    - name: Check whether port 9115 is available
+      wait_for:
+        port: 9115
+        state: started
+        timeout: 30

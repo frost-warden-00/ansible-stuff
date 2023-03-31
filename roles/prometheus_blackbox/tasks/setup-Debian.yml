@@ -1,0 +1,9 @@
+    - name: Debian - Allow Node Exporter port
+      community.general.ufw:
+        rule: allow
+        port: '9115'
+
+    - name: Debian - update package repositories and get latest package information
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600

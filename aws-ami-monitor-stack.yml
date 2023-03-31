@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: yes
+
+  vars:
+    service_name_ami: "stack_monitor_gold"
+
+  vars_files:
+    - vars-files-vault/aws-create-ami.vault
+    - vars-files/aws-ami.yml
+
+  roles:
+    - tools_server
+    - node-exporter
+    - prometheus
+    - grafana
+    - aws-create-ami

@@ -1,0 +1,14 @@
+    - name: rundeck | Add the Rundeck GPG key.
+      apt_key:
+        url: https://packages.rundeck.com/pagerduty/rundeck/gpgkey
+        state: present
+
+    - name: rundeck | Add the official Rundeck Linux repository.
+      ansible.builtin.apt_repository:
+        repo: "deb https://packages.rundeck.com/pagerduty/rundeck/any/ any main"
+        state: present
+
+    - name: rundeck | Add the official Rundeck Linux repository.
+      ansible.builtin.apt_repository:
+        repo: "deb-src https://packages.rundeck.com/pagerduty/rundeck/any/ any main"
+        state: present

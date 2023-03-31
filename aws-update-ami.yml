@@ -1,0 +1,29 @@
+---
+- hosts: all
+  become: yes
+
+  vars_files:
+    - ansible-vars/global-vars.yml
+    - ansible-vars/global-terraform.yml
+
+  vars:
+    ansible_private_key_file: "{{ base_dir }}/keys/kaminuckaze.pem"
+
+  roles:
+    - tools_server
+    - node-exporter
+    - ansible
+    - hashicorp_terraform
+    - ssh-client
+
+- hosts: 127.0.0.1
+
+  vars_files:
+    - ../ansible-vars/aws-ami.yml
+    - ansible-vars/global-terraform.yml
+
+  vars:
+    service_name_ami: "stack_ci_cd_gold"
+
+  roles:
+    - aws-create-ami

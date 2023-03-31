@@ -1,0 +1,69 @@
+---
+# tasks file for tools
+# Setup tasks.
+      - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+      - name: rundeck | Amazon Linux 2 - install java 11
+        shell: amazon-linux-extras install java-openjdk11 -y
+        become: True
+        when: ansible_facts['distribution'] == 'Amazon' and ansible_facts['distribution_major_version'] == '2'
+
+      - name: rundeck | Install Java
+        package:
+          name:
+            - openjdk-11-jre-headless
+            - nginx
+          state: present
+
+      - name: rundeck | Copy rules files on directory
+        ansible.builtin.template:
+          src: files/rundeck.conf.j2
+          dest: /etc/nginx/conf.d/rundeck.conf
+
+      - name: Install rundeck
+        package:
+           name: rundeck
+           state: latest
+
+      - name: Systemd - systemctl daemon_reload
+        systemd:
+          daemon_reload: yes
+
+      - name: Start and Enable rundeck
+        service:
+          name: rundeckd
+          state: started
+          enabled: yes
+
+      - name: Config '/etc/rundeck/framework.properties' - Set server name
+        become: yes
+        lineinfile:
+          path: /etc/rundeck/framework.properties
+          regexp: '^framework.server.name = localhost'
+          line: 'framework.server.name = {{ dns_hostname }}'
+
+      - name: Config '/etc/rundeck/framework.properties' - Set server hostname
+        become: yes
+        lineinfile:
+          path: /etc/rundeck/framework.properties
+          regexp: '^framework.server.hostname = localhost'
+          line: 'framework.server.hostname = {{ dns_hostname }}'
+
+      - name: Config '/etc/rundeck/framework.properties' - Set server url
+        become: yes
+        lineinfile:
+          path: /etc/rundeck/framework.properties
+          regexp: '^framework.server.url = http://localhost:4440'
+          line: 'framework.server.url = https://{{ dns_hostname }}'
+
+      - name: Config '/etc/rundeck/rundeck-config.properties' - Set server uri redirection
+        become: yes
+        lineinfile:
+          path: /etc/rundeck/rundeck-config.properties
+          regexp: '^grails.serverURL=http://localhost:4440'
+          line: 'grails.serverURL=https://{{ dns_hostname }}'
+
+      - name: Restart rundeckd service
+        service:
+          name: rundeckd
+          state: restarted

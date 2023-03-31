@@ -1,0 +1,16 @@
+---
+- hosts: server
+  become: yes
+
+  vars:
+    - WSL: false
+    - ufw_enable: false
+
+  roles:
+    - vagrant-template-vm
+    - tools-server
+    - ansible
+    - aws-cli
+    - hashicorp-terraform
+    - docker
+    - server-configuration

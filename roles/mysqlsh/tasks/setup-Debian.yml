@@ -1,0 +1,14 @@
+    - name: Debian like - Download MySQL repo
+      get_url:
+        url: https://dev.mysql.com/get/mysql-apt-config_0.8.18-1_all.deb
+        dest: /tmp/mysql-apt-config_0.8.18-1_all.deb
+        mode: '0664'
+
+    - name: Debian like - Install MySQL repo .deb package
+      apt:
+        deb: /tmp/mysql-apt-config_0.8.18-1_all.deb
+
+    - name: Debian - update package repositories and get latest package information
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600

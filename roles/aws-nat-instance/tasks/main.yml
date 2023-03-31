@@ -1,0 +1,14 @@
+---
+# Setup tasks.
+
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Amazon Linux - Step 1
+      shell: sysctl -w net.ipv4.ip_forward=1
+      become: true
+      changed_when: false
+
+    - name: Amazon Linux - Step 2
+      shell: /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+      become: true
+      changed_when: false

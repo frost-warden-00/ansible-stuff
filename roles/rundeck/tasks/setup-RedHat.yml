@@ -1,0 +1,6 @@
+---
+# tasks file for tools
+# Setup tasks.
+
+      - name: Prepare the rundeck repo
+        ansible.builtin.shell: curl https://raw.githubusercontent.com/rundeck/packaging/main/scripts/rpm-setup.sh 2> /dev/null | bash -s rundeck

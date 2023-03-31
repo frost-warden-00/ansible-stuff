@@ -1,0 +1,79 @@
+    - name: Red Hat like - Install WP requeriments
+      yum:
+        name:
+           - httpd
+           - yum-utils
+        state: latest
+
+    - name: Red Hat like - Allow HTTPS port
+      ansible.posix.firewalld:
+          port: 443/tcp
+          permanent: yes
+          state: enabled
+          immediate: yes
+      when: ansible_facts['distribution'] != 'Amazon'
+
+    - name: Red Hat like - Allow HTTP port
+      ansible.posix.firewalld:
+          port: 80/tcp
+          permanent: yes
+          state: enabled
+          immediate: yes
+      when: ansible_facts['distribution'] != 'Amazon'
+
+    - name: Red Hat like - Download remi repo rpm
+      get_url: url=https://rpms.remirepo.net/enterprise/remi-release-7.rpm dest=/tmp/
+
+    - name: Red Hat like - Install remi repo rpm
+      yum: name=/tmp/remi-release-7.rpm state=present
+
+    - name: Red Hat like - Add PHP yum repo
+      command: yum-config-manager --enable remi-php74
+
+    - name: Red Hat like - Install WP requeriments
+      yum:
+          name:
+            - php
+            - php-mysql
+          state: latest
+
+    - name: Red Hat like - Unarchive WP
+      ansible.builtin.unarchive:
+        src: /tmp/latest.tar.gz
+        dest: /var/www/html/
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+
+    - name: Red Hat like - Create WP database
+      community.mysql.mysql_db:
+        login_user: "{{ admin_mysql_user }}"
+        login_password: "{{ admin_mysql_pass }}"
+        state: present
+        name: wp
+        encoding: utf8
+        collation: "utf8_general_ci"
+
+    - name: Red Hat like - Add new user for WP
+      community.mysql.mysql_user:
+        login_user: "{{ admin_mysql_user }}"
+        login_password: "{{ admin_mysql_pass }}"
+        name: "{{ wp_mysql_user }}"
+        password: "{{ wp_mysql_pass }}"
+        host: "XXX.XXX.XXX%"
+        plugin: "mysql_native_password"
+        priv: 'wp.*:ALL'
+        state: present
+
+    - name: Red Hat like - Change file ownership, group and permissions
+      file:
+          path: /var/www/html
+          mode: '0755'
+          owner: apache
+          group: "{{ ansible_ssh_user }}"
+          recurse: yes
+
+    - name: Red Hat like - Start Apache
+      service:
+          name: httpd
+          state: started
+          enabled: yes

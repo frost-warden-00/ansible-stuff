@@ -1,0 +1,10 @@
+---
+# tasks file for Terraform
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Install Hashicorp Vault
+      package:
+        name:
+           - vault
+        state: present

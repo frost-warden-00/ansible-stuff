@@ -1,0 +1,19 @@
+    - name: Red Hat like - Allow Custom SSH port
+      ansible.posix.firewalld:
+        port: XXXX/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
+
+    - name: Red Hat like - Disable SSH port default
+      ansible.posix.firewalld:
+        service: ssh
+        permanent: yes
+        state: disabled
+        immediate: yes
+
+   # Need a Reboot for take effect
+    - name: Red Hat like -  Put SELinux in permissive mode, logging actions that would be blocked.
+      ansible.posix.selinux:
+        policy: targeted
+        state: permissive

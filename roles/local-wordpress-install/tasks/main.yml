@@ -1,0 +1,10 @@
+---
+# Setup tasks.
+
+    - name: TODOS - Download WP lastest
+      get_url:
+        url: https://wordpress.org/latest.tar.gz
+        dest: /tmp/latest.tar.gz
+        mode: '0664'
+
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"

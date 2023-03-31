@@ -1,0 +1,40 @@
+---
+# tasks file for tools
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Install Ansible
+      package:
+        name:
+          - ansible
+        state: latest
+
+    - name: Donwload Ansible community tools
+      command: ansible-galaxy collection install community.general
+      become_user: "{{ ansible_user }}"
+      changed_when: false
+
+    - name: Donwload Ansible AWS tools
+      command: ansible-galaxy collection install amazon.aws
+      become_user: "{{ ansible_user }}"
+      changed_when: false
+
+    - name: Donwload Ansible community mysql tools
+      command: ansible-galaxy collection install community.mysql
+      become_user: "{{ ansible_user }}"
+      changed_when: false
+
+    - name: Donwload Ansible Firewalld tools
+      command: ansible-galaxy collection install ansible.posix
+      become_user: "{{ ansible_user }}"
+      changed_when: false
+
+    - name: Donwload Ansible Certificates tools
+      command: ansible-galaxy collection install community.crypto
+      become_user: "{{ ansible_user }}"
+      changed_when: false
+
+    - name: Donwload Ansible Docker tools
+      command: ansible-galaxy collection install community.docker
+      become_user: "{{ ansible_user }}"
+      changed_when: false

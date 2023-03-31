@@ -1,0 +1,54 @@
+global:
+ resolve_timeout: 1m
+
+route:
+ group_by: [cluster]
+ receiver: "slack"
+ group_wait: 10s
+ group_interval: 30s
+ repeat_interval: 30m
+ routes:
+    - receiver: "slack"
+      group_wait: 10s
+      match_re:
+        severity: critical|warning
+      continue: true
+    - receiver: "homelab"
+      group_wait: 10s
+      match_re:
+        severity: critical
+      continue: true
+
+receivers:
+- name: homelab
+  pagerduty_configs:
+  - service_key: {{ pager_duty_service_key }}
+    send_resolved: true
+- name: "slack"
+  slack_configs:
+    - api_url: '{{ slack_api_url }}'
+      send_resolved: true
+      channel: 'homelab'
+      icon_url: https://avatars3.githubusercontent.com/u/3380462
+      {% raw %}
+      title: |-
+       [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+       {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+         {{" "}}(
+         {{- with .CommonLabels.Remove .GroupLabels.Names }}
+           {{- range $index, $label := .SortedPairs -}}
+             {{ if $index }}, {{ end }}
+             {{- $label.Name }}="{{ $label.Value -}}"
+           {{- end }}
+         {{- end -}}
+         )
+       {{- end }}
+      text: >-
+       {{ range .Alerts -}}
+       *Alert:* {{ .Annotations.title }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`{{ end }}
+         *Description:* {{ .Annotations.description }}
+         *Details:*
+           {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+           {{ end }}
+       {{ end }}
+       {% endraw %}

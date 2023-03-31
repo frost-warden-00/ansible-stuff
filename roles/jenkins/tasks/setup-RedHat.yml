@@ -1,0 +1,28 @@
+    - name: Red Hat like - Import a key from Jenkins official url.
+      rpm_key:
+        state: present
+        key: https://pkg.jenkins.io/redhat/jenkins.io.key
+
+    - name: Red Hat like - Add Jenkins yum repo
+      get_url:
+        url: https://pkg.jenkins.io/redhat/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+
+    - name: Red Hat like - Install the latest version of java
+      yum:
+        name: java-1.8.0-openjdk-devel
+        state: latest
+
+    - name: Red Hat like - Allow Jenkins port
+      ansible.posix.firewalld:
+        port: 8080/tcp
+        permanent: yes
+        state: enabled
+      when: ansible_facts['distribution'] != 'Amazon'
+
+   # Need a Reboot for take effect
+    - name: Red Hat like -  Put SELinux in permissive mode, logging actions that would be blocked.
+      ansible.posix.selinux:
+        policy: targeted
+        state: permissive
+      when: ansible_facts['distribution'] != 'Amazon'

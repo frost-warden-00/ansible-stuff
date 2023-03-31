@@ -1,0 +1,14 @@
+---
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Install Jenkins
+      package:
+        name:
+           - jenkins
+        state: latest
+
+    - name: systemctl daemon_reload
+      systemd:
+        daemon_reload: yes
+

@@ -1,0 +1,22 @@
+---
+# Setup tasks.
+
+    - name: Destroy infra - Destroy terraform stack
+      community.general.terraform:
+        project_path: "{{ terraform_base_dir }}/{{ terraform_name }}"
+        state: "absent"
+        force_init: true
+        backend_config:
+          region: "{{ backend_region }}"
+          bucket: "{{ backend_bucket }}"
+          key: "{{ backend_key }}"
+          dynamodb_table: "{{ backend_dynamodb_table }}"
+          encrypt: "true"
+        variables:
+          region: "{{ deploy_region }}"
+          role_arn: "{{ deploy_role_arn }}"
+      register: init
+
+    - name: Destroy infra - output - Destroy Terraform
+      debug:
+        msg: "{{ init.stdout }}"

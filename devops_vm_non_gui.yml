@@ -1,0 +1,14 @@
+---
+- hosts: all
+  become: yes
+
+  vars:
+    - WSL: false
+    - ufw_enable: false
+
+  roles:
+    - tools-server
+    - aws-cli
+    - docker
+    - hashicorp-terraform
+    - server-configuration

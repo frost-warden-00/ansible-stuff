@@ -1,0 +1,77 @@
+    - name: Debian like - update package repositories and get latest package information
+      apt:
+        update_cache: yes
+
+    - name: Debian like - Unarchive WP
+      ansible.builtin.unarchive:
+        src: /tmp/latest.tar.gz
+        dest: /usr/share/
+        remote_src: yes
+
+    - name: Change file ownership, group and permissions
+      file:
+          path: /usr/share/wordpress
+          mode: '0755'
+          owner: www-data
+          group: "{{ ansible_ssh_user }}"
+          recurse: yes
+
+    - name: Debian like - Install WP requeriments
+      apt: name=php,libapache2-mod-php,php-mysql state=present
+
+    - name: Debian like - Create WP database
+      community.mysql.mysql_db:
+        login_user: "{{ admin_mysql_user }}"
+        login_password: "{{ admin_mysql_pass }}"
+        state: present
+        name: wp
+        encoding: utf8
+        collation: "utf8_general_ci"
+
+    - name: Debian like - Add new user for WP
+      community.mysql.mysql_user:
+        login_user: "{{ admin_mysql_user }}"
+        login_password: "{{ admin_mysql_pass }}"
+        name: "{{ wp_mysql_user }}"
+        password: "{{ wp_mysql_pass }}"
+        host: "XXX.XXX.XXX.%"
+        plugin: "mysql_native_password"
+        priv: 'wp.*:ALL'
+        state: present
+
+    - name: Create WP configuration file
+      blockinfile:
+        path: /etc/apache2/sites-available/wordpress.conf
+        block: |
+          Alias /blog /usr/share/wordpress
+          <Directory /usr/share/wordpress>
+              Options FollowSymLinks
+              AllowOverride Limit Options FileInfo
+              DirectoryIndex index.php
+              Order allow,deny
+              Allow from all
+          </Directory>
+          <Directory /usr/share/wordpress/wp-content>
+              Options FollowSymLinks
+              Order allow,deny
+              Allow from all
+          </Directory>
+        create: true
+
+    - name: Debian like - Reload Apache
+      service:
+        name: apache2
+        state: reloaded
+        enabled: yes
+
+    - name: Debian like - WP enable
+      shell: a2ensite wordpress
+
+    - name: Debian like - WP rewrite
+      shell: a2enmod rewrite
+
+    - name: Debian like - Reload again Apache
+      service:
+        name: apache2
+        state: reloaded
+        enabled: yes

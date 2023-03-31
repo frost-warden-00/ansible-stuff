@@ -1,0 +1,19 @@
+---
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Grafana - Install Grafana
+      package:
+        name:
+          - grafana
+        state: latest
+
+    - name: Systemd - systemctl daemon_reload
+      systemd:
+        daemon_reload: yes
+
+    - name: Grafana - Start and Enable Grafana
+      service:
+        name: grafana-server
+        state: started
+        enabled: yes

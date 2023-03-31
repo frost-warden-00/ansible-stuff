@@ -1,0 +1,51 @@
+---
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Set root password to vagrant
+      ansible.builtin.user:
+         name: "root"
+         state: present
+         password: "oi,dontuseplaintextLOL"
+
+    - name: Install tools
+      package:
+        name:
+          - open-vm-tools
+          - openssh-server
+        state: latest
+
+    - name: Ensure .ssh directory exists
+      file:
+        state: directory
+        path: /home/{{ ansible_user }}/.ssh
+        mode: '0700'
+      become_user: "{{ ansible_user }}"
+
+    - name: Ensure hgfs directory exists
+      file:
+        state: directory
+        path: /mnt/hgfs
+
+    - name: Add the default insecure ssh public key to the vagrant user account
+      blockinfile:
+        path: /home/{{ ansible_user }}/.ssh/authorized_keys
+        block: |
+          HERE GOES INSECURE SSH KEY
+        create: true
+        mode: '0600'
+      become_user: "{{ ansible_user }}"
+
+    - name: Ensuring that wheel is able to use sudo without password
+      lineinfile:
+        path: /etc/sudoers
+        regexp: '^%sudo'
+        line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    - name: Vagrant without password for wheel group
+      copy:
+        content: '%vagrant ALL=(ALL:ALL) NOPASSWD:ALL'
+        dest: /etc/sudoers.d/vagrant_nopasswd
+        mode: 0440
+        validate: 'visudo -cf %s'

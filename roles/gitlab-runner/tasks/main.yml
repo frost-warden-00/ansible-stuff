@@ -1,0 +1,10 @@
+---
+# tasks file for docker
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Runner - Install Gitlab Runner
+      package:
+        name:
+           - gitlab-runner
+        state: latest

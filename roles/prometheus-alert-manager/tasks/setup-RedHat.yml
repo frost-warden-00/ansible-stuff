@@ -1,0 +1,11 @@
+    - name: Red Hat like - Allow Prometheus port
+      ansible.posix.firewalld:
+         port: 9093/tcp
+         permanent: yes
+         state: enabled
+      when: ansible_facts['distribution'] != 'Amazon'
+
+    - name: Amazon Linux - Enable EPEL Repository on Amazon Linux 2
+      shell: amazon-linux-extras install epel -y
+      become: True
+      when: ansible_facts['distribution'] == 'Amazon' and ansible_facts['distribution_major_version'] == '2'

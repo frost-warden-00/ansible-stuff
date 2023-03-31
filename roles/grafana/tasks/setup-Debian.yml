@@ -1,0 +1,33 @@
+    - name: Debian - update package repositories and get latest package information
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Debian - Allow Grafana port
+      community.general.ufw:
+        rule: allow
+        port: '3000'
+
+    - name: Debian - Install packages
+      apt:
+       name:
+          - apt-transport-https
+          - software-properties-common
+          - wget
+       state: latest
+
+    - name: Debian - Add the Grafana GPG key.
+      apt_key:
+        url: https://packages.grafana.com/gpg.key
+        state: present
+
+    - name: Debian - Add the official Grafana Linux repository.
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list.d/grafana.list
+        line: deb https://packages.grafana.com/enterprise/deb stable main
+        create: yes
+
+    - name: Debian - update package repositories and get latest package information
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600

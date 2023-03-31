@@ -1,0 +1,6 @@
+---
+# Setup tasks.
+
+    - name: AWS - Create keys for jobs
+      shell: "aws ssm get-parameter --name /global/keys/ec2/pem/kaminuckaze --with-decryption --output text --query Parameter.Value >> {{ base_dir }}/keys/kaminuckaze.pem"
+      changed_when: false

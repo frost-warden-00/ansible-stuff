@@ -1,0 +1,3 @@
+---
+# Example of variables in Ansible
+base_dir: "/home/ubuntu/IT/fort_and_long_journey"

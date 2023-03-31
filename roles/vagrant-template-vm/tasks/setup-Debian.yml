@@ -1,0 +1,11 @@
+    - name: Debian - update package repositories and get latest package information
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Debian - Disable automatic updates to avoid breaking the later vagrant build process
+      replace:
+        path: /etc/apt/apt.conf.d/20auto-upgrades
+        regexp: '1'
+        replace: '0'
+      when: ansible_facts['os_family'] != 'Debian'

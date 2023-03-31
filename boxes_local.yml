@@ -1,0 +1,12 @@
+---
+- hosts: boxes
+  become: yes
+
+  roles:
+    - tools_server
+    - node-exporter
+    - docker
+    - ansible
+    - hashicorp_terraform
+    - aws-cli
+    - server_configuration

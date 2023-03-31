@@ -1,0 +1,41 @@
+---
+# tasks file for tools
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Install tools
+      package:
+        name:
+           - net-tools
+           - vim
+           - wget
+           - rsyslog
+           - zip
+           - pigz
+           - gcc
+           - rsync
+           - rclone
+           - gcc
+           - unzip
+           - git
+           - sshpass
+           - ntfs-3g
+           - jq
+        state: latest
+
+    - name: pip install glances
+      pip:
+        name: glances
+        executable: pip3
+
+    - name: Ensure glances directory exists
+      file:
+        state: directory
+        path: /etc/glances
+        mode: '0755'
+
+    - name: Download glances.conf
+      get_url:
+        url: https://raw.githubusercontent.com/nicolargo/glances/master/conf/glances.conf
+        dest: /etc/glances/glances.conf
+        mode: '0644'

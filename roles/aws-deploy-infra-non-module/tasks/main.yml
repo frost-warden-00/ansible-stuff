@@ -1,0 +1,32 @@
+---
+# Setup tasks.
+
+    - name: "Init"
+      shell: |
+        cd {{ playbook_dir }}/{{ terraform_name }}
+        terraform init -backend-config="bucket={{ backend_bucket }}" -backend-config="key={{ backend_key }}" -backend-config="region={{ backend_region }}" -backend-config="dynamodb_table={{ backend_dynamodb_table }}" -backend-config="encrypt=true"
+      register: init
+
+    - name: "Display output: Init Terraform"
+      debug:
+        msg: "{{ init.stdout }}"
+
+    - name: "plan"
+      shell: |
+        cd {{ playbook_dir }}/{{ terraform_name }}
+        terraform plan -var "region={{ deploy_region }}" -var "role_arn={{ deploy_role_arn }}"
+      register: plan
+
+    - name: "Display output: Plan Terraform"
+      debug:
+        msg: "{{ plan.stdout }}"
+
+    - name: "Apply"
+      shell: |
+        cd {{ playbook_dir }}/{{ terraform_name }}
+        terraform apply -auto-approve -var "region={{ deploy_region }}" -var "role_arn={{ deploy_role_arn }}"
+      register: apply
+
+    - name: "Display output: Apply Terraform"
+      debug:
+        msg: "{{ apply.stdout }}"

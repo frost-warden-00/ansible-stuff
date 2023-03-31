@@ -1,0 +1,28 @@
+# If Red Hat is the OS, you ned to remove podman and buildah yum erase podman buildah
+    - name: Red Hat like - Install tools for Docker repo
+      yum:
+        name:
+           - yum-utils
+        state: present
+
+    - name: Red Hat like - Add Docker yum repo
+      command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      changed_when: false
+
+    # oh yeah, "cause docker is better than podman"
+
+    - name: Remove the podman package
+      yum:
+        name: podman
+        state: absent
+
+    - name: Remove the podman-manpages package
+      yum:
+        name: podman-manpages
+        state: absent
+
+    - name: Remove the buildah package
+      yum:
+        name: buildah
+        state: absent
+

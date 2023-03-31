@@ -1,0 +1,17 @@
+---
+# Setup tasks.
+
+    - name: AWS S3 - Install S3 module dependencies
+      pip:
+        name:
+         - boto3
+         - botocore
+        executable: pip3
+
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Docker - Install mysql-shell
+      package:
+        name:
+          - mysql-shell
+        state: latest

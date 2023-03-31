@@ -1,0 +1,3 @@
+---
+# vars file for aws-cli-v2
+my_custom_path_var: "/usr/local/mysql-shell/bin"

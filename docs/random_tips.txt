@@ -1,0 +1,246 @@
+############################ Ansible config file
+
+##### Format
+# Use the YAML callback plugin.
+stdout_callback = yaml
+# Use the stdout_callback when running ad-hoc commands.
+bin_ansible_callbacks = True
+
+############################ Inventory
+
+add ansible_ssh_common_args='-o StricHostKeyChecking=no' to inventory for avoid some warnings on Ansible
+
+
+############################   Playbooks
+
+##### sudo
+One problem with using /etc/sudoers is that changes may not persist across upgrades. The newer way to do it is /etc/sudoers.d/<username> and that *will* persist over upgrades.
+ validate: sshd -T -f %s
+ ssh validate using validate: sshd -tf %s can try
+
+
+##### MacOS
+
+TASK [deploy-infra : Define the backend configuration at init] ********************************************************************
+objc[17770]: +[__NSCFConstantString initialize] may have been in progress in another thread when fork() was called.
+objc[17770]: +[__NSCFConstantString initialize] may have been in progress in another thread when fork() was called. We cannot safely call it or ignore it in the fork() child process. Crashing instead. Set a breakpoint on objc_initializeAfterForkError to debug.
+
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+
+#####
+use square brackets when accessing a variable value
+
+- debug: var=foo.rc // its ok but no the best way to access the variable
+- debug: var=foo['rc'] // Good
+- debug: var=foo['rc-status'] // Will not fail
+- debug: var=foo.rc-status // will fail b ecause dash between rc and status
+
+#####
+use Molecule for testing ansible playbooks
+
+#####
+when task need another user or doesnt need the sudo permission
+become: false
+
+#### useful for get servers info
+ansible -i inventory <name> -m setup
+
+#### Debian/ubuntu
+
+change cache to some TTL for idempotence
+
+- Name: Update APT cache
+  apt:
+    update_cache:true
+    cache_valid_time: 3600
+
+#### update OS YUM/APT
+
+- name: update
+  yum:
+    name: '*'
+    state: latest
+
+- name: update
+  apt:
+    upgrade: dist
+    update_cache: yes
+
+#### Git and ansible
+always use tags instead of master
+
+#### Roles
+
+- name: test role
+  hosts: all
+  become: yes
+
+  roles:
+     - whatever roles
+
+- name: test role 2
+  hosts: centos
+  become: yes
+
+  roles:
+     - whatever roles centos
+
+#### Use ansible plugins
+Cloud providers
+VMware
+Virtualbox
+
+############################   CI/CD
+
+#### Sublime text 3 plugin
+trailing spaces
+
+########### Run on CI/CD workflow
+
+#### install yamllint
+pip3 install yamllint
+yamllint .
+
+#### check sintax
+ansible-playbok syntax-check.yml --syntax-check
+
+#### install ansible-lint
+pipe3 install ansible-lint
+ansible-lint playbook.yml
+
+#### install Molecule
+pip3 install molecule
+molecule init role myrole
+
+molecule login #you can log into the docker container
+
+############################   Ansible Vault
+
+#### --vault-id for multiple passwords on a specific vault
+
+
+############################   Best practices
+
+* Always create a variable where are you going to download the files:
+
+download_dir: /tmp
+
+* Always review the checksum :
+
+Variables
+checksum: sha512:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+Tasks
+checksum: "{{ checksum }}"
+
+* Use handlers
+
+* If you are going to download a file, write the file extension, so you can have idempotence
+
+* Command use
+
+- name: Test Command
+  command: >
+   asdadasd
+   asdasdadssa
+   -I asdad
+   -d /asdad/asdasd
+   creates= /asdads/asdasd
+
+* on CI/CD always run first:
+
+  ansible-playbook main.yml --syntax-check
+
+* on docker, we can disable gather facts
+
+* Becareful with tags
+
+* Check result of ansible execution
+echo $?
+
+############################ Random resources
+
+###########
+
+syncthing
+echo "fs.inotify.max_user_watches=204800" | sudo tee -a /etc/sysctl.conf
+sudo sh -c 'echo 204800 > /proc/sys/fs/inotify/max_user_watches'
+
+sudo add-apt-repository ppa:certbot/certbot
+sudo apt install python3-certbot-dns-route53
+
+###########
+
+certbot certonly \
+-n \
+--agree-tos \
+--email <email> \
+-d domain.com \
+--dns-route53 \
+--preferred-challenges=dns \
+--logs-dir /home/demi_fiend/certs/letsencrypt \
+--config-dir /home/demi_fiend/certs/letsencrypt \
+--work-dir /home/demi_fiend/certs/letsencrypt
+
+
+#########################################################################################################################
+
+# For some weird reason, in a interview, they asked me to create an Ansible role for install MySQL and change the password without human interaction.
+
+---
+tasks:
+  - name: Install MySQL 5.7 repo
+    yum: name=http://dev.mysql.com/get/mysql57-community-release-el7-8.noarch.rpm state=present
+
+  - name: Install MySQL 5.7
+    yum: pkg={{ item }}
+    with_items:
+    - mysql-community-server
+    - mysql-community-client
+    - MySQL-python
+
+  - name: Start the MySQL service
+    service: name=mysqld state=started enabled=true
+
+  - name: Change mysql root password and keep track in
+    shell: |
+      password_match=`awk '/A temporary password is generated for/ {a=$0} END{ print a }' /var/log/mysqld.log | awk '{print $(NF)}'`
+      echo $password_match
+      mysql -uroot -p$password_match --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'PassW0rd'; flush privileges; "
+      echo "[client]"
+      user=root
+      password=PassW0rd > /root/.my.cnf
+    args:
+      creates: /root/.my.cnf
+    register: change_temp_pass
+    notify: restart mysqld
+
+  - meta: flush_handlers
+  - debug:
+      var: change_temp_pass
+
+handlers:
+  - name: restart mysqld
+      service:
+      name: mysqld
+      state: restarted
+
+
+############################ Ansible + Terraform
+
+ Deploy infra
+
+ ansible-playbook deploy-ami.yml --ask-vault-pass
+
+ Add new stuff
+
+
+ Destroy infra
+
+ ansible-playbook deploy-ami.yml --ask-vault-pass
+
+ https://www.reddit.com/r/gitlab/comments/k2ut49/terraform_and_ansible_in_one_repo/
+
+ ############################ Ansible Vault
+
+  ansible-vault create spoilers-wars-s3.vault

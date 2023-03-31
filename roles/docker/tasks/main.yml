@@ -1,0 +1,48 @@
+---
+# tasks file for docker
+# Setup tasks.
+    - include_tasks: "setup-{{ ansible_os_family }}.yml"
+
+    - name: Docker - Install necessary tools for Docker
+      package:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: latest
+
+    - name: Systemd - systemctl daemon_reload
+      systemd:
+        daemon_reload: yes
+
+    - name: Docker - Start service docker, if not started
+      service:
+        name: docker.service
+        state: started
+        enabled: yes
+      when:  WSL|bool == false
+
+    - name: Docker - Start service containerd, if not started
+      service:
+        name: containerd.service
+        state: started
+        enabled: yes
+      when:  WSL|bool == false
+
+    - name: Docker - Ensure group Docker exists
+      group:
+        name: docker
+        state: present
+
+    - name: Docker - Add the selecte OS user to Docker group
+      user:
+        name: "{{ ansible_user }}"
+        group: docker
+
+    - name: Add new builder options to Linux Distros
+      blockinfile:
+        path: "/home/{{ ansible_user }}/.bashrc"
+        block: |
+          export DOCKER_BUILDKIT=1
+          export COMPOSE_DOCKER_CLI_BUILD=1
