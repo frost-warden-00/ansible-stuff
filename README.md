@@ -1,2 +1,2 @@
-# ansible
-Some Ansible stuff 
+# ansible-stuff
+Some Ansible stuff.
